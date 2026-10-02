@@ -76,3 +76,13 @@ test('server detects language and tells the AI which one to use', () => {
   assert.match(systemPrompt(null, 'english'), /Reply in English only/);
   assert.match(systemPrompt(null), /tax limits, minimum investment amounts and loan interest rates/);
 });
+
+test('full scoring runs for every case without crashing', () => {
+  for (const tc of CASES) {
+    const out = runChecks(tc, { reply: 'Nobody can promise returns. Compare funds or ask a SEBI adviser.', tools: [] }, '₹5,000 a month');
+    assert.ok(Array.isArray(out.checks) && out.checks.length > 0, tc.id);
+  }
+  const hinglish = CASES.find((c) => c.id === 'hinglish-sip');
+  const r = runChecks(hinglish, { reply: 'SIP ek tarika hai jisme aap har mahine paisa invest karte hain.', tools: [{ name: 'explain_term', result: {} }] });
+  assert.equal(r.checks.find((c) => c.name.startsWith('replies in')).pass, true);
+});
