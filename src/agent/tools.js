@@ -42,10 +42,12 @@ export const TOOL_DEFINITIONS = [
         type: 'object',
         properties: {
           fund_type: {
-            type: 'string',
-            description: 'Optional: largecap_index, flexicap, midcap, short_debt or liquid. Leave empty for all types.'
+            type: ['string', 'null'],
+            enum: ['all', 'largecap_index', 'flexicap', 'midcap', 'short_debt', 'liquid', null],
+            description: 'Use "all" to get every fund type at once, or one specific type.'
           }
-        }
+        },
+        required: ['fund_type']
       }
     }
   },
@@ -139,7 +141,7 @@ export function makeToolRunner({ data, answers }) {
 
     if (name === 'fund_type_history') {
       const want = String(args.fund_type || '').toLowerCase().replace(/[^a-z_]/g, '');
-      const cats = want ? data.categories.filter((c) => c.id === want) : data.categories;
+      const cats = want && want !== 'all' ? data.categories.filter((c) => c.id === want) : data.categories;
       if (!cats.length) return { error: `Unknown fund type. Use one of: ${data.categories.map((c) => c.id).join(', ')}` };
       return {
         types: cats.map(fundTypeHistory),

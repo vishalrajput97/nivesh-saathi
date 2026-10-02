@@ -28,7 +28,7 @@ function fakeFetch(steps) {
     const body = JSON.parse(init.body);
     calls.push({ url, body });
     const step = steps.shift();
-    if (step.status) return { ok: false, status: step.status, text: async () => 'busy', json: async () => ({}) };
+    if (step.status) return { ok: false, status: step.status, text: async () => step.text || 'busy', json: async () => ({}) };
     return { ok: true, status: 200, json: async () => ({ choices: [{ message: step }] }) };
   };
   fn.calls = calls;
@@ -99,6 +99,8 @@ test('fund_type_history gives real 1, 5 and 10-year ranges', () => {
   const run = makeToolRunner({ data, answers: null });
   const all = run('fund_type_history', {});
   assert.equal(all.types.length, 5);
+  assert.equal(run('fund_type_history', { fund_type: 'all' }).types.length, 5);
+  assert.equal(run('fund_type_history', { fund_type: null }).types.length, 5);
   const one = run('fund_type_history', { fund_type: 'largecap_index' });
   assert.equal(one.types.length, 1);
   assert.equal(one.types[0].oneYear.typical, '12.0%');
@@ -131,4 +133,21 @@ test('prompt forbids numbers that do not come from tools', () => {
   assert.match(p, /fund_type_history/);
   assert.match(p, /under 120 words/);
   assert.match(p, /SAME language and script/);
+});
+
+test('retries once when the model sends a malformed tool call', async () => {
+  const fetchImpl = fakeFetch([
+    { status: 400, text: '{"error":{"code":"tool_use_failed"}}' },
+    { content: 'Fixed on retry.' }
+  ]);
+  const out = await runAgent({ messages: [{ role: 'user', content: 'hi' }], answers: null, data, providers: [groq], fetchImpl });
+  assert.equal(out.reply, 'Fixed on retry.');
+  assert.equal(fetchImpl.calls.length, 2);
+  assert.equal(fetchImpl.calls[1].body.temperature, 0);
+});
+
+test('does not retry other 400 errors', async () => {
+  const fetchImpl = fakeFetch([{ status: 400, text: 'invalid key' }]);
+  await assert.rejects(runAgent({ messages: [{ role: 'user', content: 'hi' }], answers: null, data, providers: [groq], fetchImpl }));
+  assert.equal(fetchImpl.calls.length, 1);
 });

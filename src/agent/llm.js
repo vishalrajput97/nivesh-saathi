@@ -30,15 +30,31 @@ export function providersFromEnv(rawEnv) {
 
 export class BusyError extends Error {}
 
-async function callProvider(p, body, fetchImpl) {
+async function callOnce(p, body, fetchImpl) {
   const res = await fetchImpl(p.url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${p.key}` },
     body: JSON.stringify({ ...body, model: p.model })
   });
   if (res.status === 429 || res.status >= 500) throw new BusyError(`${p.name} returned ${res.status}`);
-  if (!res.ok) throw new Error(`${p.name} returned ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!res.ok) {
+    const text = await res.text();
+    const err = new Error(`${p.name} returned ${res.status}: ${text.slice(0, 300)}`);
+    // The model produced a malformed tool call. These are random, so one retry usually fixes it.
+    err.retryable = res.status === 400 && text.includes('tool_use_failed');
+    throw err;
+  }
   return res.json();
+}
+
+async function callProvider(p, body, fetchImpl) {
+  try {
+    return await callOnce(p, body, fetchImpl);
+  } catch (err) {
+    if (!err.retryable) throw err;
+    console.warn(`${p.name}: retrying after a malformed tool call`);
+    return callOnce(p, { ...body, temperature: 0 }, fetchImpl);
+  }
 }
 
 // Tries each provider in order; moves on if one is busy or rate-limited.
