@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nivesh Saathi · AI test page</title>
+<style>
+  :root { --ink:#10201B; --muted:#4A5A54; --brand:#0B6E5D; --line:#D9E2DE; --bg:#F3F6F4; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 40px; display:flex; flex-direction:column; gap:14px; }
+  h1 { font-size: 22px; margin: 0; }
+  p.note { margin:0; color:var(--muted); font-size:14px; line-height:1.5; }
+  label { font-size: 14px; display:flex; gap:8px; align-items:center; }
+  #log { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; min-height:260px; display:flex; flex-direction:column; gap:10px; }
+  .msg { padding:10px 12px; border-radius:12px; max-width: 90%; line-height:1.5; white-space:pre-wrap; font-size:15px; }
+  .me { align-self:flex-end; background:var(--brand); color:#fff; }
+  .bot { align-self:flex-start; background:#F1F5F3; }
+  .meta { font-size:12px; color:var(--muted); align-self:flex-start; }
+  form { display:flex; gap:8px; }
+  input[type=text] { flex:1; height:46px; border:1.5px solid var(--line); border-radius:999px; padding:0 16px; font-size:15px; }
+  button { height:46px; border:none; border-radius:999px; padding:0 18px; background:var(--brand); color:#fff; font-weight:700; font-size:15px; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:wait; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chips button { background:#fff; color:var(--ink); border:1.5px solid var(--line); font-weight:600; height:40px; font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Nivesh Saathi · AI test page</h1>
+  <p class="note">A temporary page to check the AI layer works after deploying. The real app screens come in the next step.</p>
+  <label><input type="checkbox" id="withPlan" checked> Pretend I finished onboarding (child's education, 10 years, ₹5,000/month, Balanced)</label>
+  <div class="chips">
+    <button type="button">What is an expense ratio?</button>
+    <button type="button">What if I invest ₹8,000 a month for 15 years?</button>
+    <button type="button">Which fund will give me 20% this year?</button>
+    <button type="button">SIP kya hota hai?</button>
+  </div>
+  <div id="log" aria-live="polite"></div>
+  <form id="f">
+    <label for="q" style="position:absolute;left:-9999px">Your question</label>
+    <input id="q" type="text" placeholder="Ask a question" autocomplete="off">
+    <button id="send">Send</button>
+  </form>
+</main>
+<script>
+  const log = document.getElementById('log');
+  const q = document.getElementById('q');
+  const send = document.getElementById('send');
+  const history = [];
+  const answers = { goal: "Child's education", years: 10, monthly: 5000, reaction: 'wait', hasEmergencyFund: true, hasCostlyDebt: false };
+
+  function add(cls, text) {
+    const d = document.createElement('div');
+    d.className = cls; d.textContent = text; log.appendChild(d);
+    d.scrollIntoView({ block: 'end' });
+  }
+
+  async function ask(text) {
+    if (!text.trim()) return;
+    add('msg me', text);
+    history.push({ role: 'user', content: text });
+    send.disabled = true; q.value = '';
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ messages: history, answers: document.getElementById('withPlan').checked ? answers : null })
+      });
+      const data = await res.json();
+      if (!res.ok) { add('msg bot', data.error || 'Something went wrong.'); history.pop(); return; }
+      add('msg bot', data.reply);
+      add('meta', `via ${data.provider}${data.tools.length ? ' · used ' + data.tools.join(', ') : ''}`);
+      history.push({ role: 'assistant', content: data.reply });
+    } catch (e) {
+      add('msg bot', 'Could not reach the server.'); history.pop();
+    } finally { send.disabled = false; q.focus(); }
+  }
+
+  document.getElementById('f').addEventListener('submit', (e) => { e.preventDefault(); ask(q.value); });
+  document.querySelectorAll('.chips button').forEach((b) => b.addEventListener('click', () => ask(b.textContent)));
+</script>
+</body>
+</html>

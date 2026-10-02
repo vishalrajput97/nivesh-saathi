@@ -1,6 +1,11 @@
 [build]
-  command = "npm test"
+  command = "npm run build"
   publish = "public"
 
 [functions]
   node_bundler = "esbuild"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"

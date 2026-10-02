@@ -151,3 +151,12 @@ test('does not retry other 400 errors', async () => {
   await assert.rejects(runAgent({ messages: [{ role: 'user', content: 'hi' }], answers: null, data, providers: [groq], fetchImpl }));
   assert.equal(fetchImpl.calls.length, 1);
 });
+
+test('fund_type_history reports how often a target return was reached', () => {
+  const run = makeToolRunner({ data, answers: null });
+  const out = run('fund_type_history', { fund_type: 'largecap_index', target_return: 10 });
+  assert.match(out.types[0].oneYear.reachedTarget, /^100% of 12-month periods returned 10% or more/);
+  const high = run('fund_type_history', { fund_type: 'largecap_index', target_return: 20 });
+  assert.match(high.types[0].oneYear.reachedTarget, /^0% of 12-month periods returned 20% or more/);
+  assert.equal(run('fund_type_history', { fund_type: 'all', target_return: null }).types[0].oneYear.reachedTarget, undefined);
+});

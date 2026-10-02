@@ -45,6 +45,10 @@ export const TOOL_DEFINITIONS = [
             type: ['string', 'null'],
             enum: ['all', 'largecap_index', 'flexicap', 'midcap', 'short_debt', 'liquid', null],
             description: 'Use "all" to get every fund type at once, or one specific type.'
+          },
+          target_return: {
+            type: ['number', 'null'],
+            description: 'If the user mentions a return they hope for (for example 20 for 20%), pass it here to see how often each fund type reached it in a year. Otherwise null.'
           }
         },
         required: ['fund_type']
@@ -80,7 +84,7 @@ function rollingReturns(monthly, months) {
   return out.sort((a, b) => a - b);
 }
 
-export function fundTypeHistory(category) {
+export function fundTypeHistory(category, targetReturn = null) {
   const one = rollingReturns(category.monthly, 12);
   if (!one.length) return { fundType: category.label, available: false };
   const summary = {
@@ -94,6 +98,11 @@ export function fundTypeHistory(category) {
       negativeYears: `${Math.round((one.filter((r) => r < 0).length / one.length) * 100)}% of 12-month periods lost money`
     }
   };
+  const target = Number(targetReturn);
+  if (Number.isFinite(target) && target > -100 && target < 1000 && targetReturn !== null) {
+    const share = Math.round((one.filter((r) => r >= target / 100).length / one.length) * 100);
+    summary.oneYear.reachedTarget = `${share}% of 12-month periods returned ${target}% or more`;
+  }
   for (const years of [5, 10]) {
     const r = rollingReturns(category.monthly, years * 12);
     if (r.length >= 12) {
@@ -144,7 +153,7 @@ export function makeToolRunner({ data, answers }) {
       const cats = want && want !== 'all' ? data.categories.filter((c) => c.id === want) : data.categories;
       if (!cats.length) return { error: `Unknown fund type. Use one of: ${data.categories.map((c) => c.id).join(', ')}` };
       return {
-        types: cats.map(fundTypeHistory),
+        types: cats.map((c) => fundTypeHistory(c, args.target_return ?? null)),
         note: 'Lump-sum returns from past data, before tax. Past returns don\'t guarantee future results.'
       };
     }

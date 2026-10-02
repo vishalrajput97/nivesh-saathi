@@ -2,83 +2,32 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nivesh Saathi · AI test page</title>
-<style>
-  :root { --ink:#10201B; --muted:#4A5A54; --brand:#0B6E5D; --line:#D9E2DE; --bg:#F3F6F4; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background:var(--bg); color:var(--ink); }
-  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 40px; display:flex; flex-direction:column; gap:14px; }
-  h1 { font-size: 22px; margin: 0; }
-  p.note { margin:0; color:var(--muted); font-size:14px; line-height:1.5; }
-  label { font-size: 14px; display:flex; gap:8px; align-items:center; }
-  #log { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; min-height:260px; display:flex; flex-direction:column; gap:10px; }
-  .msg { padding:10px 12px; border-radius:12px; max-width: 90%; line-height:1.5; white-space:pre-wrap; font-size:15px; }
-  .me { align-self:flex-end; background:var(--brand); color:#fff; }
-  .bot { align-self:flex-start; background:#F1F5F3; }
-  .meta { font-size:12px; color:var(--muted); align-self:flex-start; }
-  form { display:flex; gap:8px; }
-  input[type=text] { flex:1; height:46px; border:1.5px solid var(--line); border-radius:999px; padding:0 16px; font-size:15px; }
-  button { height:46px; border:none; border-radius:999px; padding:0 18px; background:var(--brand); color:#fff; font-weight:700; font-size:15px; cursor:pointer; }
-  button:disabled { opacity:.6; cursor:wait; }
-  .chips { display:flex; flex-wrap:wrap; gap:8px; }
-  .chips button { background:#fff; color:var(--ink); border:1.5px solid var(--line); font-weight:600; height:40px; font-size:14px; }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nivesh Saathi · Investing without the jargon</title>
+<meta name="description" content="A plain-language guide to mutual funds and SIPs. Build a simple plan and see honest return ranges from real data.">
+<meta name="theme-color" content="#0B6E5D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B6E5D'/%3E%3Cpath d='M6 22l6-7 5 4 9-11' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head>
 <body>
-<main>
-  <h1>Nivesh Saathi · AI test page</h1>
-  <p class="note">A temporary page to check the AI layer works after deploying. The real app screens come in the next step.</p>
-  <label><input type="checkbox" id="withPlan" checked> Pretend I finished onboarding (child's education, 10 years, ₹5,000/month, Balanced)</label>
-  <div class="chips">
-    <button type="button">What is an expense ratio?</button>
-    <button type="button">What if I invest ₹8,000 a month for 15 years?</button>
-    <button type="button">Which fund will give me 20% this year?</button>
-    <button type="button">SIP kya hota hai?</button>
-  </div>
-  <div id="log" aria-live="polite"></div>
-  <form id="f">
-    <label for="q" style="position:absolute;left:-9999px">Your question</label>
-    <input id="q" type="text" placeholder="Ask a question" autocomplete="off">
-    <button id="send">Send</button>
-  </form>
-</main>
-<script>
-  const log = document.getElementById('log');
-  const q = document.getElementById('q');
-  const send = document.getElementById('send');
-  const history = [];
-  const answers = { goal: "Child's education", years: 10, monthly: 5000, reaction: 'wait', hasEmergencyFund: true, hasCostlyDebt: false };
-
-  function add(cls, text) {
-    const d = document.createElement('div');
-    d.className = cls; d.textContent = text; log.appendChild(d);
-    d.scrollIntoView({ block: 'end' });
-  }
-
-  async function ask(text) {
-    if (!text.trim()) return;
-    add('msg me', text);
-    history.push({ role: 'user', content: text });
-    send.disabled = true; q.value = '';
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: history, answers: document.getElementById('withPlan').checked ? answers : null })
-      });
-      const data = await res.json();
-      if (!res.ok) { add('msg bot', data.error || 'Something went wrong.'); history.pop(); return; }
-      add('msg bot', data.reply);
-      add('meta', `via ${data.provider}${data.tools.length ? ' · used ' + data.tools.join(', ') : ''}`);
-      history.push({ role: 'assistant', content: data.reply });
-    } catch (e) {
-      add('msg bot', 'Could not reach the server.'); history.pop();
-    } finally { send.disabled = false; q.focus(); }
-  }
-
-  document.getElementById('f').addEventListener('submit', (e) => { e.preventDefault(); ask(q.value); });
-  document.querySelectorAll('.chips button').forEach((b) => b.addEventListener('click', () => ask(b.textContent)));
-</script>
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" href="#welcome" aria-label="Nivesh Saathi home">
+      <span class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-6 4 3 7-9"/><path d="M15 6h5v5"/></svg></span>
+      <span>Nivesh Saathi</span>
+    </a>
+    <button class="link-btn" type="button" data-action="restart" id="restartBtn" hidden>Start over</button>
+  </header>
+  <main id="app" tabindex="-1">
+    <p class="loading">Loading…</p>
+  </main>
+  <footer class="footnote">
+    An education tool, not investment advice. Not a SEBI-registered adviser. Suggests fund types, not specific funds. Past returns don't guarantee future results.
+  </footer>
+</div>
+<script type="module" src="app.js"></script>
 </body>
 </html>
