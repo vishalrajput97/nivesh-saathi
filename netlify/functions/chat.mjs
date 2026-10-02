@@ -39,7 +39,7 @@ export default async (req, context) => {
     return json(200, { reply: result.reply, tools: result.tools.map((t) => t.name), provider: result.provider });
   } catch (err) {
     if (err instanceof BusyError) {
-      return json(503, { error: 'The guide is busy right now. Please try again in a minute.' });
+      return json(503, { error: 'Lots of people are asking questions right now. Please try again in a minute.' });
     }
     console.error(err);
     return json(400, { error: err.message.slice(0, 200) });
