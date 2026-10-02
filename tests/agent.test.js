@@ -130,4 +130,5 @@ test('prompt forbids numbers that do not come from tools', () => {
   assert.match(p, /MUST come from a tool result/);
   assert.match(p, /fund_type_history/);
   assert.match(p, /under 120 words/);
+  assert.match(p, /SAME language and script/);
 });
