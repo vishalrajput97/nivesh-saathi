@@ -4,6 +4,7 @@ import { buildPlan } from '../engine/plan.js';
 import { buildAllocation } from '../engine/allocation.js';
 import { scoreRisk } from '../engine/risk.js';
 import { projectSip } from '../engine/returns.js';
+import { tipsFor, COMMON_TIPS, WHERE_TO_COMPARE } from '../engine/choose.js';
 
 export const TOOL_DEFINITIONS = [
   {
@@ -59,7 +60,7 @@ export const TOOL_DEFINITIONS = [
     type: 'function',
     function: {
       name: 'get_fund_types',
-      description: "Get the fund types in the user's plan (or the app's fund types if they have no plan), with plain descriptions and monthly amounts.",
+      description: "Get the fund types in the user's plan (or all fund types if they have no plan), with plain descriptions, monthly amounts, and tips on how to choose a fund within each type. Use this when the user asks which fund to pick or to see options.",
       parameters: { type: 'object', properties: {} }
     }
   }
@@ -165,14 +166,22 @@ export function makeToolRunner({ data, answers }) {
           inPlan: true,
           monthlyTotal: plan.monthly,
           split: { growthPercent: plan.split.growth, stabilityPercent: plan.split.stability },
-          funds: plan.funds.map(({ label, plain, monthly, assetClass }) => ({
+          funds: plan.funds.map(({ id, label, plain, monthly, assetClass }) => ({
             label, plain, monthly,
             shareOfMonthly: `${Math.round((monthly / plan.monthly) * 100)}%`,
-            part: assetClass === 'growth' ? 'growth' : 'stability'
-          }))
+            part: assetClass === 'growth' ? 'growth' : 'stability',
+            howToChoose: tipsFor(id).specific
+          })),
+          howToChooseAnyFund: COMMON_TIPS,
+          whereToCompare: WHERE_TO_COMPARE
         };
       }
-      return { inPlan: false, fundTypes: data.categories.map(({ label, plain }) => ({ label, plain })) };
+      return {
+        inPlan: false,
+        fundTypes: data.categories.map(({ id, label, plain }) => ({ label, plain, howToChoose: tipsFor(id).specific })),
+        howToChooseAnyFund: COMMON_TIPS,
+        whereToCompare: WHERE_TO_COMPARE
+      };
     }
 
     return { error: `Unknown tool: ${name}` };

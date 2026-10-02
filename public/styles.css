@@ -153,3 +153,14 @@ h2 { font-size: 18px; margin: 0; }
 .fade { animation: fade .25s ease-out; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+
+/* How to choose */
+.choose details { border-top: 1px solid var(--line); padding-top: 10px; }
+.choose details:first-of-type { border-top: none; padding-top: 0; }
+.choose summary { cursor: pointer; font-weight: 800; font-size: 15px; min-height: 36px; display: flex; align-items: center; gap: 8px; list-style: none; }
+.choose summary::-webkit-details-marker { display: none; }
+.choose summary::before { content: '+'; width: 22px; height: 22px; border-radius: 999px; background: var(--tint); color: var(--brand-dark); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+.choose details[open] summary::before { content: '–'; }
+.tips { margin: 6px 0 4px; padding-left: 22px; color: var(--ink); font-size: 14.5px; }
+.tips li { margin: 4px 0; }
+.callout a { color: var(--brand-dark); font-weight: 800; }

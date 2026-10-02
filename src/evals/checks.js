@@ -107,6 +107,8 @@ export function runChecks(testCase, result, planText = '') {
     const got = detectLanguage(reply);
     add(`replies in ${c.lang}`, got === c.lang, got === c.lang ? '' : `replied in ${got}`);
   }
+  const toolNames = reply.match(/\b(project_growth|fund_type_history|explain_term|get_fund_types)\b/gi) || [];
+  add('no internal tool names', toolNames.length === 0, toolNames.join(', '));
   const limit = c.maxWords ?? 180;
   add(`under ${limit} words`, wordCount(reply) <= limit, `${wordCount(reply)} words`);
   for (const re of c.mustMatch || []) add(`says: ${re.source.slice(0, 40)}`, re.test(reply), '');

@@ -6,6 +6,8 @@ import { makeToolRunner } from '../src/agent/tools.js';
 import { chatCompletion, cleanKey, providersFromEnv } from '../src/agent/llm.js';
 import { systemPrompt } from '../src/agent/prompt.js';
 import { buildPlan } from '../src/engine/plan.js';
+import { scrubToolNames } from '../src/agent/agent.js';
+import { TYPE_TIPS } from '../src/engine/choose.js';
 
 // Small fake dataset: every fund type grows steadily.
 function series(annual, months = 200) {
@@ -218,4 +220,38 @@ test('keys that are clearly invalid are ignored', () => {
   assert.deepEqual(providersFromEnv({ GROQ_API_KEY: 'gsk_ok', GEMINI_API_KEY: 'xai-wrong' }).map((p) => p.name), ['groq', 'groq-backup']);
   assert.deepEqual(providersFromEnv({ GROQ_API_KEY: 'gsk_ok', GEMINI_API_KEY: 'AIzaOK' }).map((p) => p.name), ['groq', 'groq-backup', 'gemini']);
   assert.equal(providersFromEnv({ GROQ_API_KEY: 'xai-wrong' }).length, 0);
+});
+
+test('prompt states the real data source and hides tool names', () => {
+  const p = systemPrompt(null);
+  assert.match(p, /published daily by AMFI/);
+  assert.match(p, /MFapi\.in/);
+  assert.match(p, /SEBI regulates mutual funds but is not the source/);
+  assert.match(p, /Never mention your internal tool or function names/);
+});
+
+test('tool names never reach the user', () => {
+  assert.equal(scrubToolNames('The *project_growth* tool uses past data.'), 'our calculator uses past data.');
+  assert.equal(scrubToolNames('use `explain_term()` function'), 'use our glossary');
+  assert.equal(scrubToolNames('jaise project_growth aur fund_type_history'), 'jaise our calculator aur past data');
+});
+
+test('agent scrubs tool names from final answers', async () => {
+  const fetchImpl = fakeFetch([{ content: 'Numbers come from the project_growth tool.' }]);
+  const out = await runAgent({ messages: [{ role: 'user', content: 'hi' }], answers: null, data, providers: [groq], fetchImpl });
+  assert.equal(out.reply, 'Numbers come from our calculator.');
+});
+
+test('prompt says who built it and forbids "made by OpenAI"', () => {
+  const p = systemPrompt(null);
+  assert.match(p, /built by Vishal Rajput/);
+  assert.match(p, /Do not say you were made or built by OpenAI/);
+  assert.match(p, /Never assume preferences the user hasn't stated/);
+});
+
+test('how-to-choose tips exist for every fund type and reach the AI', () => {
+  for (const c of data.categories) assert.ok(TYPE_TIPS[c.id]?.length >= 2, c.id);
+  const tool = makeToolRunner({ data, answers }).call(null, 'get_fund_types');
+  assert.ok(tool.funds.every((f) => f.howToChoose.length >= 2));
+  assert.match(tool.whereToCompare, /amfiindia\.com/);
 });

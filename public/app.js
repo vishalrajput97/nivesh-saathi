@@ -2,6 +2,7 @@
 // same engine as the server. Only "Ask anything" talks to the AI.
 import { buildPlan } from './engine/plan.js';
 import { sipFutureValue } from './engine/returns.js';
+import { tipsFor, COMMON_TIPS, WHERE_TO_COMPARE } from './engine/choose.js';
 
 const STORE = 'nivesh-saathi:answers:v1';
 const app = document.getElementById('app');
@@ -169,7 +170,7 @@ const screens = {
         ${p.notes.map((n) => `<div class="callout warm">${ICON.shield}<div>${esc(n.text)}</div></div>`).join('')}
         <h2 style="margin-top:6px">Fund types for your plan</h2>
         ${[...g, ...s].map(fundCard).join('')}
-        <p class="fine">These are fund types, not specific funds. Compare funds of each type on your investment app (look for low expense ratio and a direct plan), or ask a SEBI-registered adviser for a personal pick.</p>
+        ${chooseCard(p.funds)}
       </div>
       <div class="actions"><button class="btn primary" type="button" data-go="growth">See what it could grow to</button><button class="btn secondary" type="button" data-go="ask">Ask a question about my plan</button></div></section>`;
   },
@@ -208,6 +209,18 @@ const screens = {
       </form></section>`;
   }
 };
+
+/* ---------- how to choose ---------- */
+function chooseCard(funds) {
+  const list = (items) => `<ul class="tips">${items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`;
+  return `<div class="card stack choose">
+    <h2>How to choose a fund</h2>
+    <p class="fine" style="font-size:14px">We show fund types, not specific funds. Here's how to pick a good fund within each type in your plan.</p>
+    ${funds.map((f, i) => `<details ${i === 0 ? 'open' : ''}><summary>${esc(f.label)}</summary>${list(tipsFor(f.id).specific)}</details>`).join('')}
+    <details><summary>For every fund type</summary>${list(COMMON_TIPS)}</details>
+    <div class="callout cool">${ICON.info}<div>${esc(WHERE_TO_COMPARE).replace('amfiindia.com', '<a href="https://www.amfiindia.com" target="_blank" rel="noopener">amfiindia.com</a>')} For a personal pick, ask a SEBI-registered investment adviser.</div></div>
+  </div>`;
+}
 
 /* ---------- growth ---------- */
 function growthResult() {

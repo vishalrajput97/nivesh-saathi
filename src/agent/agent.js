@@ -11,6 +11,23 @@ const MAX_USER_CHARS = 600;
 const MAX_ASSISTANT_CHARS = 500; // older answers are shortened before being sent again
 const MAX_TOOL_ROUNDS = 4;
 
+// Safety net: replace internal tool names with plain words before users see them.
+const TOOL_WORDS = {
+  project_growth: 'our calculator',
+  fund_type_history: 'past data',
+  explain_term: 'our glossary',
+  get_fund_types: 'your plan'
+};
+export function scrubToolNames(text) {
+  let out = String(text || '');
+  for (const [name, words] of Object.entries(TOOL_WORDS)) {
+    // Optional "the", any quote/markdown marks, optional "()", optional "tool"/"function".
+    const re = new RegExp('(the\\s+)?[`*_"\']*' + name + '(\\s*\\(\\))?[`*_"\']*(\\s+(tool|function))?', 'gi');
+    out = out.replace(re, words);
+  }
+  return out;
+}
+
 export function cleanMessages(messages) {
   return (Array.isArray(messages) ? messages : [])
     .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
@@ -51,7 +68,7 @@ export async function runAgent({ messages, answers, data, providers, fetchImpl }
 
     const calls = message?.tool_calls || [];
     if (!calls.length) {
-      return { reply: (message?.content || '').trim(), provider, tools: toolResults, language };
+      return { reply: scrubToolNames((message?.content || '').trim()), provider, tools: toolResults, language };
     }
 
     history.push({ role: 'assistant', content: message.content || '', tool_calls: calls });
