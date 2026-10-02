@@ -5,6 +5,7 @@ import { lookupTerm } from '../src/agent/glossary.js';
 import { makeToolRunner } from '../src/agent/tools.js';
 import { chatCompletion, cleanKey, providersFromEnv } from '../src/agent/llm.js';
 import { systemPrompt } from '../src/agent/prompt.js';
+import { buildPlan } from '../src/engine/plan.js';
 
 // Small fake dataset: every fund type grows steadily.
 function series(annual, months = 200) {
@@ -185,4 +186,16 @@ test('short retry-after waits and retries the same model', async () => {
   assert.equal(out.reply, 'After waiting.');
   assert.equal(fetchImpl.calls[1].body.model, 'm1');
   assert.ok(Date.now() - t >= 900);
+});
+
+test('plan context and tool give exact fund shares that add up to 100%', () => {
+  const house = { goal: 'House', years: 5, monthly: 5000, reaction: 'wait', hasEmergencyFund: true, hasCostlyDebt: false };
+  const tool = makeToolRunner({ data, answers: house })('get_fund_types');
+  const shares = tool.funds.map((f) => parseInt(f.shareOfMonthly, 10));
+  assert.deepEqual(tool.funds.map((f) => f.monthly), [2500, 1000, 1500]);
+  assert.deepEqual(shares, [50, 20, 30]);
+  assert.equal(tool.split.growthPercent, 70);
+  const prompt = systemPrompt(buildPlan(house, data));
+  assert.match(prompt, /largecap_index: ₹2,500 a month = 50% of the monthly amount/);
+  assert.match(prompt, /never recalculate/);
 });

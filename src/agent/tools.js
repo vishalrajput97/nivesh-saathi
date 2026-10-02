@@ -161,7 +161,16 @@ export function makeToolRunner({ data, answers }) {
     if (name === 'get_fund_types') {
       if (answers && answers.years && answers.monthly && answers.reaction) {
         const plan = buildPlan(answers, data);
-        return { inPlan: true, split: plan.split, funds: plan.funds.map(({ label, plain, monthly }) => ({ label, plain, monthly })) };
+        return {
+          inPlan: true,
+          monthlyTotal: plan.monthly,
+          split: { growthPercent: plan.split.growth, stabilityPercent: plan.split.stability },
+          funds: plan.funds.map(({ label, plain, monthly, assetClass }) => ({
+            label, plain, monthly,
+            shareOfMonthly: `${Math.round((monthly / plan.monthly) * 100)}%`,
+            part: assetClass === 'growth' ? 'growth' : 'stability'
+          }))
+        };
       }
       return { inPlan: false, fundTypes: data.categories.map(({ label, plain }) => ({ label, plain })) };
     }
