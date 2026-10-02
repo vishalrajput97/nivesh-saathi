@@ -1,7 +1,13 @@
 // Talks to Groq, falling back to Gemini when Groq is busy or out of free quota.
 // Both use the OpenAI-style chat format.
 
-export function providersFromEnv(env) {
+// Removes spaces, line breaks and quote marks that often sneak in when pasting keys.
+export function cleanKey(value) {
+  return String(value || '').trim().replace(/^['"`]+|['"`]+$/g, '').replace(/^Bearer\s+/i, '').trim();
+}
+
+export function providersFromEnv(rawEnv) {
+  const env = { ...rawEnv, GROQ_API_KEY: cleanKey(rawEnv.GROQ_API_KEY), GEMINI_API_KEY: cleanKey(rawEnv.GEMINI_API_KEY) };
   const list = [];
   if (env.GROQ_API_KEY) {
     list.push({

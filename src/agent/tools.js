@@ -36,6 +36,22 @@ export const TOOL_DEFINITIONS = [
   {
     type: 'function',
     function: {
+      name: 'fund_type_history',
+      description: 'Get real past performance of each fund type from historical data: worst, typical and best 1-year returns, how often a year was negative, and the typical yearly return over 5 and 10 years. Use this for ANY question about how much a fund type returns, how risky it is, or whether a return like 20% is realistic.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fund_type: {
+            type: 'string',
+            description: 'Optional: largecap_index, flexicap, midcap, short_debt or liquid. Leave empty for all types.'
+          }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
       name: 'get_fund_types',
       description: "Get the fund types in the user's plan (or the app's fund types if they have no plan), with plain descriptions and monthly amounts.",
       parameters: { type: 'object', properties: {} }
@@ -44,6 +60,46 @@ export const TOOL_DEFINITIONS = [
 ];
 
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
+const pct = (r) => `${(r * 100).toFixed(1)}%`;
+
+function percentile(sorted, p) {
+  const i = (sorted.length - 1) * p;
+  const lo = Math.floor(i), hi = Math.ceil(i);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
+}
+
+// Lump-sum returns over every rolling window of `months`, as annual rates.
+function rollingReturns(monthly, months) {
+  const out = [];
+  for (let i = 0; i + months < monthly.length; i++) {
+    const growth = monthly[i + months][1] / monthly[i][1];
+    out.push(Math.pow(growth, 12 / months) - 1);
+  }
+  return out.sort((a, b) => a - b);
+}
+
+export function fundTypeHistory(category) {
+  const one = rollingReturns(category.monthly, 12);
+  if (!one.length) return { fundType: category.label, available: false };
+  const summary = {
+    fundType: category.label,
+    dataFrom: category.monthly[0][0],
+    dataTo: category.monthly.at(-1)[0],
+    oneYear: {
+      worst: pct(one[0]),
+      typical: pct(percentile(one, 0.5)),
+      best: pct(one.at(-1)),
+      negativeYears: `${Math.round((one.filter((r) => r < 0).length / one.length) * 100)}% of 12-month periods lost money`
+    }
+  };
+  for (const years of [5, 10]) {
+    const r = rollingReturns(category.monthly, years * 12);
+    if (r.length >= 12) {
+      summary[`over${years}Years`] = { worstPerYear: pct(r[0]), typicalPerYear: pct(percentile(r, 0.5)), bestPerYear: pct(r.at(-1)) };
+    }
+  }
+  return summary;
+}
 
 export function makeToolRunner({ data, answers }) {
   const seriesById = Object.fromEntries(data.categories.map((c) => [c.id, c.monthly]));
@@ -68,17 +124,26 @@ export function makeToolRunner({ data, answers }) {
       const years = Math.round(clamp(Number(args.years) || 0, 1, 40));
       const p = projectSip({ seriesById, weights: weightsFor(years), monthly, years });
       if (!p.ok) return { ok: false, reason: p.reason };
-      const pct = (r) => `${(r * 100).toFixed(1)}% a year`;
       return {
         ok: true,
         monthly,
         years,
         invested: p.invested,
-        weak: { value: p.outcomes.weak.value, rate: pct(p.outcomes.weak.annualRate) },
-        typical: { value: p.outcomes.typical.value, rate: pct(p.outcomes.typical.annualRate) },
-        strong: { value: p.outcomes.strong.value, rate: pct(p.outcomes.strong.annualRate) },
+        weak: { value: p.outcomes.weak.value, rate: `${pct(p.outcomes.weak.annualRate)} a year` },
+        typical: { value: p.outcomes.typical.value, rate: `${pct(p.outcomes.typical.annualRate)} a year` },
+        strong: { value: p.outcomes.strong.value, rate: `${pct(p.outcomes.strong.annualRate)} a year` },
         basis: `Based on ${p.basis.windowsCounted} past ${p.basis.windowYears}-year periods since ${p.basis.from}${p.basis.extrapolated ? ', extended to the full period' : ''}.`,
         note: "Past returns don't guarantee future results."
+      };
+    }
+
+    if (name === 'fund_type_history') {
+      const want = String(args.fund_type || '').toLowerCase().replace(/[^a-z_]/g, '');
+      const cats = want ? data.categories.filter((c) => c.id === want) : data.categories;
+      if (!cats.length) return { error: `Unknown fund type. Use one of: ${data.categories.map((c) => c.id).join(', ')}` };
+      return {
+        types: cats.map(fundTypeHistory),
+        note: 'Lump-sum returns from past data, before tax. Past returns don\'t guarantee future results.'
       };
     }
 
