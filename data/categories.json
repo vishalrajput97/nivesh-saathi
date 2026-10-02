@@ -1,0 +1,89 @@
+{
+  "_note": "Each fund type uses one long-running fund as a stand-in for its past performance. These are data sources only and are never shown to users as recommendations. We use Regular plans because they go back further (Direct plans only began in 2013), so the ranges include bad decades like 2008. Regular plans have slightly higher fees, which makes the numbers a little conservative. Among matching funds, the script picks the one with the longest history that is still updating. To force a fund, set schemeCode.",
+  "categories": [
+    {
+      "id": "largecap_index",
+      "label": "Large-cap index fund",
+      "plain": "Follows India's 50 biggest companies. Low cost, simple to own.",
+      "assetClass": "growth",
+      "plan": "regular",
+      "proxyQueries": [
+        "UTI Nifty 50 Index",
+        "UTI Nifty Index",
+        "HDFC Index Fund Nifty 50",
+        "HDFC Nifty 50 Index"
+      ],
+      "exclude": [],
+      "schemeCode": null
+    },
+    {
+      "id": "flexicap",
+      "label": "Flexi-cap fund",
+      "plain": "A fund manager picks companies of all sizes.",
+      "assetClass": "growth",
+      "plan": "regular",
+      "proxyQueries": [
+        "HDFC Flexi Cap",
+        "Franklin India Flexi Cap",
+        "Parag Parikh Flexi Cap"
+      ],
+      "exclude": [],
+      "schemeCode": null
+    },
+    {
+      "id": "midcap",
+      "label": "Mid-cap fund",
+      "plain": "Invests in medium-sized companies. Can grow faster, but swings more.",
+      "assetClass": "growth",
+      "plan": "regular",
+      "proxyQueries": [
+        "HDFC Mid Cap",
+        "HDFC Mid-Cap Opportunities",
+        "Kotak Midcap",
+        "Kotak Emerging Equity",
+        "Franklin India Prima"
+      ],
+      "exclude": [],
+      "schemeCode": null
+    },
+    {
+      "id": "short_debt",
+      "label": "Short-duration debt fund",
+      "plain": "Lends money to the government and companies for 1-3 years. Steadier, grows slower.",
+      "assetClass": "stability",
+      "plan": "regular",
+      "proxyQueries": [
+        "ICICI Prudential Short Term Fund",
+        "HDFC Short Term Debt",
+        "HDFC Short Term Fund",
+        "Axis Short Duration",
+        "Aditya Birla Sun Life Short Term Fund"
+      ],
+      "exclude": [
+        "ultra",
+        "gilt",
+        "overnight",
+        "credit risk",
+        "institutional"
+      ],
+      "schemeCode": null
+    },
+    {
+      "id": "liquid",
+      "label": "Liquid fund",
+      "plain": "Very short-term lending. Good for money you may need soon, like an emergency cushion.",
+      "assetClass": "stability",
+      "plan": "regular",
+      "proxyQueries": [
+        "SBI Liquid",
+        "HDFC Liquid",
+        "ICICI Prudential Liquid"
+      ],
+      "exclude": [
+        "overnight",
+        "institutional"
+      ],
+      "schemeCode": null
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "nivesh-saathi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Plain-language investing guide for mutual funds and SIPs",
+  "scripts": {
+    "data": "node scripts/build-returns-data.mjs",
+    "test": "node --test",
+    "demo": "node scripts/demo-plan.mjs"
+  },
+  "engines": { "node": ">=18" }
+}
