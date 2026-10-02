@@ -4,6 +4,7 @@ import { systemPrompt } from './prompt.js';
 import { TOOL_DEFINITIONS, makeToolRunner } from './tools.js';
 import { chatCompletion } from './llm.js';
 import { buildPlan } from '../engine/plan.js';
+import { detectLanguage } from './language.js';
 
 const MAX_TURNS = 6;       // past messages kept (keeps requests small for free-tier limits)
 const MAX_USER_CHARS = 600;
@@ -35,7 +36,8 @@ export async function runAgent({ messages, answers, data, providers, fetchImpl }
 
   const plan = safePlan(answers, data);
   const runTool = makeToolRunner({ data, answers: plan ? answers : null });
-  const history = [{ role: 'system', content: systemPrompt(plan) }, ...convo];
+  const language = detectLanguage(convo.at(-1).content);
+  const history = [{ role: 'system', content: systemPrompt(plan, language) }, ...convo];
   const toolResults = [];
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
@@ -49,7 +51,7 @@ export async function runAgent({ messages, answers, data, providers, fetchImpl }
 
     const calls = message?.tool_calls || [];
     if (!calls.length) {
-      return { reply: (message?.content || '').trim(), provider, tools: toolResults };
+      return { reply: (message?.content || '').trim(), provider, tools: toolResults, language };
     }
 
     history.push({ role: 'assistant', content: message.content || '', tool_calls: calls });

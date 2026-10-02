@@ -67,8 +67,8 @@ export const GLOSSARY = {
   },
   elss: {
     term: 'ELSS (tax-saving fund)',
-    plain: 'An equity fund that can lower your income tax under the old tax regime, with a 3-year lock-in.',
-    example: 'You cannot withdraw for 3 years from each investment.'
+    plain: 'An equity (growth) fund that can lower your income tax under the old tax regime, up to the yearly limit for tax-saving investments. Each investment is locked in for 3 years.',
+    example: 'Money you put in today can only be withdrawn after 3 years. Tax rules change, so check the current limit before investing for tax.'
   },
   lump_sum: {
     term: 'Lump sum',
@@ -90,6 +90,11 @@ export const GLOSSARY = {
     plain: 'Earning returns on your past returns, not just on what you put in. It is why starting early helps so much.',
     example: 'Growth in year 10 is calculated on everything built up over years 1 to 9.'
   },
+  costly_debt: {
+    term: 'High-interest debt (credit cards, personal loans)',
+    plain: 'Loans that charge more interest than investments usually earn. Paying them off first is usually the best "return" you can get.',
+    example: 'Clearing credit card dues before starting a SIP stops the debt from growing faster than your savings.'
+  },
   rebalancing: {
     term: 'Rebalancing',
     plain: 'Bringing your growth/stability split back to your plan, usually once a year, after markets move it.',
@@ -105,7 +110,7 @@ const ALIASES = {
   'largecap': 'large_cap', 'large cap': 'large_cap', 'midcap': 'mid_cap', 'mid cap': 'mid_cap',
   'flexicap': 'flexi_cap', 'flexi cap': 'flexi_cap', 'liquid': 'liquid_fund', 'emergency': 'emergency_fund',
   'tax saving': 'elss', 'tax saver': 'elss', 'lumpsum': 'lump_sum', 'one time': 'lump_sum',
-  'cagr': 'xirr', 'return': 'xirr', 'compound': 'compounding', 'rebalance': 'rebalancing'
+  'cagr': 'xirr', 'credit card': 'costly_debt', 'loan': 'costly_debt', 'debt first': 'costly_debt', 'return': 'xirr', 'compound': 'compounding', 'rebalance': 'rebalancing'
 };
 
 export function lookupTerm(query) {

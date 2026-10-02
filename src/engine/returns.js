@@ -68,14 +68,19 @@ export function historicalSipRates(seriesById, weights, windowMonths) {
   return { rates, firstMonth: months[0], lastMonth: months[months.length - 1], monthsAvailable: months.length };
 }
 
+// Longest window used for rates. Longer windows mean very few samples, all
+// starting at similar market points, which makes the range too narrow.
+export const MAX_WINDOW_YEARS = 10;
+
 // Projects a SIP using the weak (10th percentile), typical (median) and strong
-// (90th percentile) rates seen in history. If history is shorter than the goal,
-// it uses the longest window with enough samples and flags it in `basis`.
-export function projectSip({ seriesById, weights, monthly, years, minWindows = 24 }) {
+// (90th percentile) rates seen in history. Goals longer than MAX_WINDOW_YEARS,
+// or longer than the history allows, use shorter windows extended to the full
+// goal; `basis.extrapolated` flags this.
+export function projectSip({ seriesById, weights, monthly, years, minWindows = 24, maxWindowYears = MAX_WINDOW_YEARS }) {
   const months = Math.round(years * 12);
   const { months: shared } = alignSeries(usedSeries(seriesById, weights));
 
-  const windowYears = Math.min(Math.floor(years), Math.floor((shared.length - minWindows) / 12));
+  const windowYears = Math.min(Math.floor(years), maxWindowYears, Math.floor((shared.length - minWindows) / 12));
   if (windowYears < 1) {
     return { ok: false, reason: 'Not enough past data for this mix yet.' };
   }

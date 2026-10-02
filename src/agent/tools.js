@@ -143,7 +143,7 @@ export function makeToolRunner({ data, answers }) {
         weak: { value: p.outcomes.weak.value, rate: `${pct(p.outcomes.weak.annualRate)} a year` },
         typical: { value: p.outcomes.typical.value, rate: `${pct(p.outcomes.typical.annualRate)} a year` },
         strong: { value: p.outcomes.strong.value, rate: `${pct(p.outcomes.strong.annualRate)} a year` },
-        basis: `Based on ${p.basis.windowsCounted} past ${p.basis.windowYears}-year periods since ${p.basis.from}${p.basis.extrapolated ? ', extended to the full period' : ''}.`,
+        basis: `Based on ${p.basis.windowsCounted} past ${p.basis.windowYears}-year periods since ${p.basis.from}${p.basis.extrapolated ? `, extended to the full ${years} years (longer goals use 10-year periods so the range covers many different market starting points)` : ''}.`,
         note: "Past returns don't guarantee future results."
       };
     }

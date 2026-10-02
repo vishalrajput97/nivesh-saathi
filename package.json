@@ -8,7 +8,8 @@
     "data": "node scripts/build-returns-data.mjs",
     "test": "node --test",
     "demo": "node scripts/demo-plan.mjs",
-    "build": "npm test && node scripts/build-site.mjs"
+    "build": "npm test && node scripts/build-site.mjs",
+    "evals": "node --env-file-if-exists=.env scripts/run-evals.mjs"
   },
   "engines": {
     "node": ">=18"

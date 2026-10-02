@@ -224,7 +224,7 @@ function growthResult() {
       <div class="outcome mid"><span class="l">Typical</span><span class="v">${inrShort(o.typical.value)}</span><span class="r">${pct(o.typical.annualRate)} a year</span></div>
       <div class="outcome"><span class="l">Strong markets</span><span class="v">${inrShort(o.strong.value)}</span><span class="r">${pct(o.strong.annualRate)} a year</span></div>
     </div>
-    <p class="fine">Based on ${pr.basis.windowsCounted} past ${pr.basis.windowYears}-year periods of a similar mix, ${monthName(pr.basis.from)} to ${monthName(pr.basis.to)}.${pr.basis.extrapolated ? ' Your goal is longer than our data, so we extended the longest periods available.' : ''} Weak and strong are the 10th and 90th percentile. Past returns don't guarantee future results.</p>`;
+    <p class="fine">Based on ${pr.basis.windowsCounted} past ${pr.basis.windowYears}-year periods of a similar mix, ${monthName(pr.basis.from)} to ${monthName(pr.basis.to)}.${pr.basis.extrapolated ? ` For longer goals we use ${pr.basis.windowYears}-year periods and extend them to your ${p.years} years, so the range covers many different market starting points.` : ''} Weak and strong are the 10th and 90th percentile. Past returns don't guarantee future results.</p>`;
 }
 
 function chartSvg(monthly, years, o) {

@@ -90,3 +90,15 @@ test('weak ≤ typical ≤ strong for a bumpy mix', () => {
   assert.ok(p.outcomes.weak.value <= p.outcomes.typical.value);
   assert.ok(p.outcomes.typical.value <= p.outcomes.strong.value);
 });
+
+test('goals over 10 years use 10-year periods, giving a wider range', () => {
+  // Bumpy fund over 20 years: few 18-year windows vs many 10-year windows.
+  const bumpy = steadySeries(0.12, 245).map(([m, v], i) => [m, v * (1 + 0.25 * Math.sin(i / 9))]);
+  const p = projectSip({ seriesById: { a: bumpy }, weights: { a: 1 }, monthly: 3000, years: 20 });
+  assert.equal(p.basis.windowYears, 10);
+  assert.equal(p.basis.extrapolated, true);
+  assert.ok(p.basis.windowsCounted > 100);
+  const old = projectSip({ seriesById: { a: bumpy }, weights: { a: 1 }, monthly: 3000, years: 20, maxWindowYears: 40 });
+  const spread = (x) => x.outcomes.strong.annualRate - x.outcomes.weak.annualRate;
+  assert.ok(spread(p) > spread(old), `new spread ${spread(p)} should beat old ${spread(old)}`);
+});
