@@ -29,7 +29,8 @@ export function unsafeWords(reply) {
   return found;
 }
 
-export { detectLanguage } from '../agent/language.js';
+import { detectLanguage } from '../agent/language.js';
+export { detectLanguage };
 
 // Turns curly quotes and the many dash/minus characters into plain ones.
 export function normaliseText(text) {

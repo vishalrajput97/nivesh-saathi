@@ -8,15 +8,25 @@ export function cleanKey(value) {
 
 export function providersFromEnv(rawEnv) {
   const env = { ...rawEnv, GROQ_API_KEY: cleanKey(rawEnv.GROQ_API_KEY), GEMINI_API_KEY: cleanKey(rawEnv.GEMINI_API_KEY) };
+  // Skip keys that are clearly not valid, so one bad key doesn't cause errors on every request.
+  if (env.GROQ_API_KEY && !env.GROQ_API_KEY.startsWith('gsk_')) {
+    console.warn('GROQ_API_KEY does not start with "gsk_", so it is being ignored.');
+    env.GROQ_API_KEY = '';
+  }
+  if (env.GEMINI_API_KEY && !env.GEMINI_API_KEY.startsWith('AIza')) {
+    console.warn('GEMINI_API_KEY does not start with "AIza", so it is being ignored.');
+    env.GEMINI_API_KEY = '';
+  }
   const list = [];
   if (env.GROQ_API_KEY) {
     const url = 'https://api.groq.com/openai/v1/chat/completions';
     list.push({ name: 'groq', url, key: env.GROQ_API_KEY, model: env.GROQ_MODEL || 'openai/gpt-oss-120b' });
     // Groq's free limits are per model, so a second model roughly doubles free capacity.
-    const backup = env.GROQ_BACKUP_MODEL === 'none' ? null : (env.GROQ_BACKUP_MODEL || 'llama-3.3-70b-versatile');
+    const backup = env.GROQ_BACKUP_MODEL === 'none' ? null : (env.GROQ_BACKUP_MODEL || 'openai/gpt-oss-20b');
     if (backup) list.push({ name: 'groq-backup', url, key: env.GROQ_API_KEY, model: backup });
   }
-  if (env.GEMINI_API_KEY) {
+  // Only use a Gemini key that looks real (Google AI Studio keys start with "AIza").
+  if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.startsWith('AIza')) {
     list.push({
       name: 'gemini',
       url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
@@ -46,8 +56,8 @@ async function callOnce(p, body, fetchImpl) {
   if (!res.ok) {
     const text = await res.text();
     const err = new Error(`${p.name} returned ${res.status}: ${text.slice(0, 300)}`);
-    // The model produced a malformed tool call. These are random, so one retry usually fixes it.
-    err.retryable = res.status === 400 && text.includes('tool_use_failed');
+    // The model produced a malformed tool call or unparseable output. These are random, so one retry usually fixes it.
+    err.retryable = res.status === 400 && (text.includes('tool_use_failed') || text.includes('output_parse_failed'));
     throw err;
   }
   return res.json();

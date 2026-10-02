@@ -167,7 +167,7 @@ test('fund_type_history reports how often a target return was reached', () => {
 test('a second Groq model is added as backup', () => {
   const list = providersFromEnv({ GROQ_API_KEY: 'gsk_x' });
   assert.deepEqual(list.map((p) => p.name), ['groq', 'groq-backup']);
-  assert.equal(list[1].model, 'llama-3.3-70b-versatile');
+  assert.equal(list[1].model, 'openai/gpt-oss-20b');
   assert.equal(providersFromEnv({ GROQ_API_KEY: 'gsk_x', GROQ_BACKUP_MODEL: 'none' }).length, 1);
 });
 
@@ -198,4 +198,24 @@ test('plan context and tool give exact fund shares that add up to 100%', () => {
   const prompt = systemPrompt(buildPlan(house, data));
   assert.match(prompt, /largecap_index: ₹2,500 a month = 50% of the monthly amount/);
   assert.match(prompt, /never recalculate/);
+});
+
+test('retries once on unparseable model output', async () => {
+  const fetchImpl = fakeFetch([
+    { status: 400, text: '{"error":{"code":"output_parse_failed"}}' },
+    { content: 'Second try worked.' }
+  ]);
+  const out = await runAgent({ messages: [{ role: 'user', content: 'hi' }], answers: null, data, providers: [groq], fetchImpl });
+  assert.equal(out.reply, 'Second try worked.');
+});
+
+test('an invalid-looking Gemini key is ignored', () => {
+  assert.deepEqual(providersFromEnv({ GROQ_API_KEY: 'gsk_x', GEMINI_API_KEY: 'gsk_wrong' }).map((p) => p.name), ['groq', 'groq-backup']);
+  assert.deepEqual(providersFromEnv({ GROQ_API_KEY: 'gsk_x', GEMINI_API_KEY: ' "AIzaReal" ' }).map((p) => p.name), ['groq', 'groq-backup', 'gemini']);
+});
+
+test('keys that are clearly invalid are ignored', () => {
+  assert.deepEqual(providersFromEnv({ GROQ_API_KEY: 'gsk_ok', GEMINI_API_KEY: 'xai-wrong' }).map((p) => p.name), ['groq', 'groq-backup']);
+  assert.deepEqual(providersFromEnv({ GROQ_API_KEY: 'gsk_ok', GEMINI_API_KEY: 'AIzaOK' }).map((p) => p.name), ['groq', 'groq-backup', 'gemini']);
+  assert.equal(providersFromEnv({ GROQ_API_KEY: 'xai-wrong' }).length, 0);
 });
